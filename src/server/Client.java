@@ -1,4 +1,4 @@
-package com.company;
+package server;
 
 import java.io.*;
 import java.net.Socket;
@@ -9,6 +9,8 @@ public class Client {
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private String username;
+    private boolean isOnline;
+
 
     public Client(Socket socket, String username) {
         try {
@@ -17,6 +19,7 @@ public class Client {
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.username = username;
+            isOnline = true;
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
@@ -29,11 +32,19 @@ public class Client {
             bufferedWriter.flush();
 
             Scanner scanner = new Scanner(System.in);
-            while (socket.isConnected()) {
+            while (isOnline) {
                 String messageToSend = scanner.nextLine();
+
+
                 bufferedWriter.write(username + ": " + messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
+
+                if(messageToSend == null || messageToSend.equalsIgnoreCase("exit")){
+                    isOnline = false;
+                    closeEverything(socket,bufferedReader,bufferedWriter);
+
+                }
             }
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
@@ -46,9 +57,12 @@ public class Client {
             public void run() {
                 String msgFromGroupChat;
 
-                while (socket.isConnected()) {
+                while (isOnline) {
                     try {
                         msgFromGroupChat = bufferedReader.readLine();
+                        if(msgFromGroupChat == null){
+                            break;
+                        }
                         System.out.println(msgFromGroupChat);
                     } catch (IOException e) {
                         closeEverything(socket, bufferedReader, bufferedWriter);
@@ -74,13 +88,4 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username for the group chat: ");
-        String username = scanner.nextLine();
-        Socket socket = new Socket("localhost", 1234);
-        Client client = new Client(socket, username);
-        client.listenForMessage();
-        client.sendMessage();
-    }
 }

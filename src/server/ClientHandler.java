@@ -1,3 +1,5 @@
+package server;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -37,13 +39,20 @@ public class ClientHandler implements Runnable{
         while (socket.isConnected()){
             try{
                 messageFromClient = bufferedReader.readLine();
-                broadcastMessage(messageFromClient);
+
+                if(messageFromClient == null || messageFromClient.endsWith("exit")){
+                    broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+                    closeEverything(socket,bufferedReader,bufferedWriter);
+                }else{
+                    broadcastMessage(messageFromClient);
+                }
+
+
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
                 break;
             }
         }
-
     }
 
     public void broadcastMessage(String messageToSend){
@@ -62,8 +71,9 @@ public class ClientHandler implements Runnable{
 
     public void removeClientHandler(){
         clientHandlers.remove(this);
-        broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+
     }
+
     public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
         removeClientHandler();
         try{
