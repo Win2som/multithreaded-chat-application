@@ -1,4 +1,4 @@
-package server;
+package Models;
 
 import java.io.*;
 import java.net.Socket;
@@ -19,7 +19,6 @@ public class Client {
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.username = username;
-            isOnline = true;
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
@@ -32,19 +31,20 @@ public class Client {
             bufferedWriter.flush();
 
             Scanner scanner = new Scanner(System.in);
-            while (isOnline) {
+            while (socket.isConnected()) {
                 String messageToSend = scanner.nextLine();
 
 
-                bufferedWriter.write(username + ": " + messageToSend);
+                bufferedWriter.write(messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
 
                 if(messageToSend == null || messageToSend.equalsIgnoreCase("exit")){
-                    isOnline = false;
                     closeEverything(socket,bufferedReader,bufferedWriter);
-
+                    break;
                 }
+
+
             }
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
@@ -57,7 +57,7 @@ public class Client {
             public void run() {
                 String msgFromGroupChat;
 
-                while (isOnline) {
+                while (socket.isConnected()) {
                     try {
                         msgFromGroupChat = bufferedReader.readLine();
                         if(msgFromGroupChat == null){

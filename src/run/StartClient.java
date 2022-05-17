@@ -1,6 +1,6 @@
 package run;
 
-import server.Client;
+import Models.Client;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -11,7 +11,10 @@ public class StartClient {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter your username for the group chat: ");
         String username = scanner.nextLine();
-        Socket socket = new Socket("localhost", 8000);
+        String localHost = "localhost";
+        int port = 8900;
+
+        Socket socket = new Socket(localHost, port);
         Client client = new Client(socket, username);
         client.listenForMessage();
         client.sendMessage();

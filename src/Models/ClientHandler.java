@@ -1,32 +1,31 @@
-package server;
+package Models;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
 public class ClientHandler implements Runnable{
-//keeps track of all the clients, loop thru this list to broadcast message to containing clients
+
     public static ArrayList<ClientHandler> clientHandlers=new ArrayList<>();
-    //the socket passed from the server class, establishes a connection between a client and server
     private Socket socket;
-    //will be used to read messages sent from a client
     private BufferedReader bufferedReader;
-    //to send messages to client (from other client)
     private BufferedWriter bufferedWriter;
     private  String clientUsername;
 
 
     public ClientHandler(Socket socket) {
-        //try/catch because of the IOException
+
         try {
             this.socket = socket;
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); //(in the order they are written)makes communication more efficient, character stream, byte stream
+            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.clientUsername = bufferedReader.readLine();
             clientHandlers.add(this);
-            broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");   //sends message to connected clients when a new user connects
+            broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");
+            specialBroadCast();
+
         }catch (IOException e){
-            closeEverything(socket, bufferedReader, bufferedWriter);  //this method is to avoid nested try/catch blocks
+            closeEverything(socket, bufferedReader, bufferedWriter);
         }
 
     }
@@ -40,13 +39,15 @@ public class ClientHandler implements Runnable{
             try{
                 messageFromClient = bufferedReader.readLine();
 
-                if(messageFromClient == null || messageFromClient.endsWith("exit")){
+                if(messageFromClient == null || messageFromClient.equalsIgnoreCase("exit")){
                     broadcastMessage("SERVER: " + clientUsername + " has left the chat");
                     closeEverything(socket,bufferedReader,bufferedWriter);
+                    break;
+                }else if(messageFromClient.equalsIgnoreCase("people in server")){
+                    specialBroadCast();
                 }else{
-                    broadcastMessage(messageFromClient);
+                    broadcastMessage(clientUsername+": "+messageFromClient);
                 }
-
 
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
@@ -67,6 +68,23 @@ public class ClientHandler implements Runnable{
             closeEverything(socket, bufferedReader, bufferedWriter);
              }
          }
+    }
+
+    public void specialBroadCast(){
+
+        int peopleOnline = clientHandlers.size();
+
+        for(ClientHandler clientHandler: clientHandlers){
+            try {
+                if(clientHandler.clientUsername.equals(clientUsername)){
+                    clientHandler.bufferedWriter.write("There are "+peopleOnline+" client(s) onLine currently");
+                    clientHandler.bufferedWriter.newLine();
+                    clientHandler.bufferedWriter.flush();
+                }
+            }catch (IOException e) {
+                closeEverything(socket, bufferedReader, bufferedWriter);
+            }
+        }
     }
 
     public void removeClientHandler(){

@@ -1,1 +1,2 @@
-# week-5-chat-app-Win2som
+# chat application to connect over network and across computers
+
